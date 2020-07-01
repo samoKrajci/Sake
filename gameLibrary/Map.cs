@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ProtocolLibrary;
+using protocolLibrary;
+using Microsoft.Xna.Framework;
 
 namespace GameLibrary
 {
@@ -32,13 +35,18 @@ namespace GameLibrary
         }
         public void AddSnake(Snake newSnake)
         {
-            this.snakes.Add(newSnake);
+            snakes.Add(newSnake);
         }
-        public void Update()
+        public void AddSnakeRandomPosition(Texture2D texture = null)
+        {
+            Vector2 position = new Vector2(Rand.om.Next() % _width, Rand.om.Next() % _height);
+            Snake snake = new Snake(position);
+            snakes.Add(snake);
+        }
+        public void AutoUpdate()
         {
             foreach (Snake s in snakes)
                 s.Move(_height, _width);
-
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -47,5 +55,23 @@ namespace GameLibrary
                 s.Draw(spriteBatch, _cellSize);
         }
 
+        public MapUpdatePacket CreateMapUpdatePacket()
+        {
+            List<Vector2> snakesPositions = new List<Vector2>();
+            foreach (Snake s in snakes)
+                snakesPositions.Add(s.position);
+            return new MapUpdatePacket(snakes.Count, snakesPositions);
+        }
+
+        public void UpdateFromMapUpdatePacket(MapUpdatePacket mapUpdatePacket, Texture2D[] textures)
+        {
+            for(int i=0; i < mapUpdatePacket.snakeCount; i++)
+            {
+                if (i < snakes.Count)
+                    snakes[i].position = mapUpdatePacket.snakes[i];
+                else
+                    snakes.Add(new Snake(mapUpdatePacket.snakes[i], textures[i]));
+            }
+        }
     }
 }

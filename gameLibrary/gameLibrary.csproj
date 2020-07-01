@@ -48,5 +48,11 @@
     <Compile Include="Rand.cs" />
     <Compile Include="Snake.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\protocolLibrary\protocolLibrary.csproj">
+      <Project>{8b6e17e9-2e04-469d-8b57-6e60e161dd00}</Project>
+      <Name>protocolLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

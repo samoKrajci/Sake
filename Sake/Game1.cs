@@ -8,6 +8,7 @@ using Client;
 using System.Threading.Tasks;
 using ProtocolLibrary;
 using GameLibrary;
+using protocolLibrary;
 
 namespace Sake
 {
@@ -17,13 +18,27 @@ namespace Sake
         SpriteBatch spriteBatch;
         Map map;
         int HEIGHT, WIDTH, CELLSIZE;
+        string state = "lobby";
 
         readonly Client.TcpClient tcpClient = new Client.TcpClient();
         SnakeUser snakeUser;
+       
+        private readonly Texture2D[] textures = new Texture2D[3];
 
-        private static Texture2D[] textures = new Texture2D[3];
-        private static Texture2D cat;
-
+        private void ResponseWrapper()
+        {
+            string response = tcpClient.LastResponse;
+            if (response == "requesting move")
+                tcpClient.SendRequest(snakeUser.SendNextDireciton());
+            else if (response == "game over")
+                this.Exit();
+            else
+            {
+                MapUpdatePacket mapUpdatePacket = new MapUpdatePacket(tcpClient.LastResponse);
+                map.UpdateFromMapUpdatePacket(mapUpdatePacket, textures);
+            }
+        }
+      
         public Game()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -34,17 +49,18 @@ namespace Sake
         {
             tcpClient.ConnectToServer();
             await tcpClient.ReceiveResponseAsync();
-            InitialInfo initialInfo = new InitialInfo(tcpClient.LastResponse);
-            snakeUser = new SnakeUser(initialInfo.id, initialInfo.snakesPositions[initialInfo.id], textures[initialInfo.id]);
+            state = "game";
+            InitialInfoPacket initialInfo = new InitialInfoPacket(tcpClient.LastResponse);
+            snakeUser = new SnakeUser(initialInfo.id, initialInfo.snakes[initialInfo.id]);
 
             HEIGHT = initialInfo.height;
             WIDTH = initialInfo.width;
             CELLSIZE = initialInfo.cellSize;
             map = new Map(HEIGHT, WIDTH, CELLSIZE);
 
-            for (int i = 0; i < initialInfo.players; i++)
+            for (int i = 0; i < initialInfo.snakeCount; i++)
             {
-                map.AddSnake(new Snake(initialInfo.snakesPositions[i]));
+                map.AddSnake(new Snake(initialInfo.snakes[i]));
                 Debug.WriteLine(i);
                 Debug.WriteLine(map.snakes[i]._texture);
             }
@@ -52,6 +68,8 @@ namespace Sake
             graphics.PreferredBackBufferHeight = map._height * map._cellSize;
             graphics.PreferredBackBufferWidth = map._width * map._cellSize;
             graphics.ApplyChanges();
+
+            _ = tcpClient.RunTaskAfterResponseLoopAsync(() => ResponseWrapper());
 
             base.Initialize();
         }
@@ -77,6 +95,13 @@ namespace Sake
 
         protected override void Update(GameTime gameTime)
         {
+            Keyboard.GetState();
+
+            if (Keyboard.HasBeenPressed(Keys.Right))
+                snakeUser.nextDirection = "r";
+            else if (Keyboard.HasBeenPressed(Keys.Left))
+                snakeUser.nextDirection = "l";
+
             base.Update(gameTime);
         }
 
@@ -84,6 +109,9 @@ namespace Sake
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            if (state == "lobby")
+                return;
 
             spriteBatch.Begin();
 

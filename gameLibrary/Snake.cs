@@ -16,6 +16,12 @@ namespace GameLibrary
         {
             _id = id;
         }
+        public string SendNextDireciton()
+        {
+            string ret = String.Format("{0} {1}", _id, nextDirection);
+            nextDirection = "f";
+            return ret;
+        }
     }
     public class Snake
     {

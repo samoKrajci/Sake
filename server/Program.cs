@@ -1,69 +1,179 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using ProtocolLibrary;
 using GameLibrary;
 using Microsoft.Xna.Framework;
+using protocolLibrary;
 
 namespace Server
 {
     class Program
     {
-        private static readonly Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        private static readonly List<User> users = new List<User>();
         private const int BUFFER_SIZE = 2048;
         private const int PORT = 100;
+        private const int HEIGHT = 30, WIDTH = 50, CELLSIZE = 16;
+        private const int TPS = 2;
+        private const int maxPlayers = 3;
+
+        private static readonly Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        private static List<User> users = new List<User>();
         private static readonly byte[] buffer = new byte[BUFFER_SIZE];
-        private const int HEIGHT = 30, WIDTH = 30, CELLSIZE = 20;
+        private static readonly int tickMs = 1000/TPS;
         private static Map map;
+        private static string state = "lobby";
 
-        static void SendAllPeriodicallyAsync(int periode)
+        static void SendAll(string message)
         {
-            Task.Factory.StartNew(() => SendAllPeriodically(periode));
-        }
-        static void SendAllPeriodically(int periode)
-        {
-            while (true)
+            byte[] data = Encoding.ASCII.GetBytes(message); ;
+            foreach (User u in users)
             {
-                foreach (User u in users)
-                {
-                    byte[] data = Encoding.ASCII.GetBytes("sent data");
-                    u.SendData(data);
-                    Console.WriteLine("data send after " + periode + " ms");
-                }
-                Thread.Sleep(periode);
+                u.SendData(data);
             }
         }
-
-        static void SendAllLoop()
+        static void PrepareGame()
         {
-            string message;
-            byte[] data;
-            while (true)
+            map = new Map(HEIGHT, WIDTH, CELLSIZE);
+            for (int i=0; i<users.Count; i++)
             {
-                message = Console.ReadLine();
-                data = Encoding.ASCII.GetBytes(message);
+                map.AddSnakeRandomPosition();
+            }
+
+            List<Vector2> snakesPositions = new List<Vector2>();
+            foreach (Snake s in map.snakes)
+                snakesPositions.Add(s.position);
+
+            Console.WriteLine(String.Format("Map created.\nDimensions: {0}x{1}\nCell size: {2}\nPlayers: {3}", WIDTH, HEIGHT, CELLSIZE, map.snakes.Count));
+            Console.WriteLine();
+
+            for(int i=0; i<users.Count; i++)
+            {
+                User user = users[i];
+                InitialInfoPacket initialInfo = new InitialInfoPacket(HEIGHT, WIDTH, CELLSIZE, users.Count, i, snakesPositions);
+                byte[] data = Encoding.ASCII.GetBytes(initialInfo.serialized);
+                try
+                {
+                    user.SendData(data);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+
+                Console.WriteLine(String.Format("Initial info sent to {0}", user.username));
+            }
+
+            Console.WriteLine();
+
+
+        }
+        static async Task RunGameLoop(CancellationToken cancellationToken)
+        {
+            PrepareGame();
+            Console.WriteLine("Game starting...");
+            Console.WriteLine();
+
+            while (true) {
+                Stopwatch watch = new Stopwatch();
+                watch.Start();
+                
+                Thread.Sleep(tickMs);
+                List<Task<string>> tasks = new List<Task<string>>();
+                Console.WriteLine("requesting move from all users");
+                Console.WriteLine(users.Count);
                 foreach (User u in users)
                 {
-                    u.SendData(data);
+                    u.SendData(Encoding.ASCII.GetBytes("requesting move"));
+                    tasks.Add(Task.Run(() => u.ReceiveResponse()));
                 }
+
+                var results = await Task.WhenAll(tasks);
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    SendAll("game over");
+                    CloseAllUserSockets();
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+
+                foreach (var item in results)
+                {
+                    Snake snake = map.snakes[Convert.ToInt32(item.Split(' ')[0])];
+                    string direction = item.Split(' ')[1];
+                    if (direction == "r")
+                        snake.TurnRight();
+                    else if (direction == "l")
+                        snake.TurnLeft();
+                }
+
+                map.AutoUpdate();
+                MapUpdatePacket mapUpdatePacket = map.CreateMapUpdatePacket();
+                Console.WriteLine("sending updated map to all users");
+                foreach (User u in users)
+                    u.SendData(Encoding.ASCII.GetBytes(mapUpdatePacket.serialized));
+
+                watch.Stop();
+                Console.WriteLine(String.Format("tick duration: {0}", watch.Elapsed));
+                Console.WriteLine();
             }
         }
+        static void GameMasterLoop()
+        {
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            while(state != "quit")
+            {
+                string message = "";
+                string command = Console.ReadLine();
 
+                if(command == "quit")
+                {
+                    SendAll("game over");
+                    cancellationTokenSource.Cancel();
+                    message = "quitting\npress enter to exit";
+                    state = command;
+                }
+                else if(command == "game")
+                {
+                    if (state != "game")
+                    {
+                        message = "starting game";
+                        cancellationTokenSource = new CancellationTokenSource();
+                        try
+                        {
+                            Task.Run(() => RunGameLoop(cancellationTokenSource.Token));
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            Console.WriteLine("game over");
+                        }
+                    }
+                    state = command;
+                }
+                else if(command == "lobby")
+                {
+                    cancellationTokenSource.Cancel();
+                    message = "waiting for players...";
+                    state = command;
+                }
+
+                if (message != "")
+                    Console.WriteLine(message);
+            }
+        }
         static void Main()
         {
             Console.Title = "Server";
-            SetupGame();
             SetupServer();
-            SendAllLoop();
+            GameMasterLoop();
 
-            //Console.ReadLine(); // When we press enter close everything
-            CloseAllSockets();
+            Console.ReadLine(); // When we press enter close everything
+            CloseAllUserSockets();
+            serverSocket.Close();
         }
 
         private static void SetupServer()
@@ -74,25 +184,22 @@ namespace Server
             serverSocket.BeginAccept(AcceptCallback, null);
             Console.WriteLine("Server setup complete");
         }
-
-        private static void SetupGame()
-        {
-            map = new Map(HEIGHT, WIDTH, CELLSIZE);
-        }
-
         /// <summary>
         /// Close all connected client (we do not need to shutdown the server socket as its connections
         /// are already closed with the clients).
         /// </summary>
-        private static void CloseAllSockets()
+        private static void CloseAllUserSockets()
         {
             foreach (User u in users)
             {
-                u.socket.Shutdown(SocketShutdown.Both);
+                try
+                {
+                    u.socket.Shutdown(SocketShutdown.Both);
+                }
+                catch (ObjectDisposedException) {; }
                 u.socket.Close();
             }
-
-            serverSocket.Close();
+            users = new List<User>();
         }
 
         private static void AcceptCallback(IAsyncResult AR)
@@ -108,24 +215,38 @@ namespace Server
                 return;
             }
 
+            if((users.Count >= maxPlayers) || (state != "lobby"))
+            {
+                byte[] message = Encoding.ASCII.GetBytes("Lobby full or no open lobby. Try again in a moment...");
+                socket.Send(message);
+                serverSocket.BeginAccept(AcceptCallback, null);
+
+                Console.WriteLine("Someone tried to connect unsuccessfully");
+                return;
+            }
+
             User user = new User("user " + users.Count.ToString(), socket);
             users.Add(user);
+            Console.WriteLine(String.Format("{0} connected.", user.username));
+            /*
             map.AddSnake(new Snake(new Vector2(Rand.om.Next() % WIDTH, Rand.om.Next() % HEIGHT)));
             Console.WriteLine("Client connected, sending initial info...\n");
 
             List<Vector2> snakesPositions = new List<Vector2>();
             foreach (Snake s in map.snakes)
                 snakesPositions.Add(s.position);
-            InitialInfo initialInfo = new InitialInfo(HEIGHT, WIDTH, CELLSIZE, users.Count, users.Count - 1, snakesPositions);
+            InitialInfoPacket initialInfo = new InitialInfoPacket(HEIGHT, WIDTH, CELLSIZE, users.Count, users.Count - 1, snakesPositions);
             byte[] data = Encoding.ASCII.GetBytes(initialInfo.serialized);
-            user.socket.Send(data);
+            user.SendData(data);
 
             Console.WriteLine("Initial info sent.\n");
+            */
 
-            user.socket.BeginReceive(user.buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, socket);
+            //user.socket.BeginReceive(user.buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, socket);
             serverSocket.BeginAccept(AcceptCallback, null);
         }
 
+        // toto sa vlastne moze vymazat asi
         private static void ReceiveCallback(IAsyncResult AR)
         {
             Socket currentSocket = (Socket)AR.AsyncState;
@@ -165,39 +286,7 @@ namespace Server
 
             Console.WriteLine("received Text: " + text);
 
-            Console.WriteLine("sleep (3s)");
-            Thread.Sleep(3000);
-            Console.WriteLine("woken up");
-
-
-            if (text.ToLower() == "get time") // Client requested time
-            {
-                Console.WriteLine("Text is a get time request");
-                byte[] data = Encoding.ASCII.GetBytes(DateTime.Now.ToLongTimeString());
-                current.SendData(data);
-                Console.WriteLine("Time sent to client");
-            }
-            else if (Regex.Match(text.ToLower(), "^change username").Success)
-            {
-                Console.WriteLine("user wants to change username");
-                string[] splitInput = text.ToLower().Split(' ');
-                byte[] data;
-                string message;
-                if (splitInput.Length < 3)
-                {
-                    message = "no username provided in input";
-                }
-                else
-                {
-                    string username = splitInput[2];
-                    message = "username changed";
-                    current.username = username;
-                }
-                data = Encoding.ASCII.GetBytes(message);
-                Console.WriteLine(message);
-                current.SendData(data);
-            }
-            else if (text.ToLower() == "exit") // Client wants to exit gracefully
+            if (text.ToLower() == "exit") // Client wants to exit gracefully
             {
                 // Always Shutdown before closing
                 current.socket.Shutdown(SocketShutdown.Both);
@@ -206,19 +295,18 @@ namespace Server
                 Console.WriteLine("Client disconnected");
                 return;
             }
-            else if (text.ToLower() == "no response")
-            {
-                Console.WriteLine("no response sent");
-            }
             else
             {
-                Console.WriteLine("Text is an invalid request");
-                byte[] data = Encoding.ASCII.GetBytes("Invalid request");
-                current.SendData(data);
-                Console.WriteLine("Warning Sent");
+                string[] msg = text.ToLower().Split(' ');
+                Snake s = map.snakes[Convert.ToInt32(msg[0])];
+                if (msg[1] == "r")
+                    s.TurnRight();
+                else if (msg[1] == "l")
+                    s.TurnLeft();
+                current.moveReceived = true;
+                
+                Console.WriteLine(String.Format("From {0}(snake {1}) received: {2}", current.username, msg[0], msg[1] ));
             }
-
-            Console.WriteLine();
 
             current.socket.BeginReceive(current.buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, current.socket);
         }
