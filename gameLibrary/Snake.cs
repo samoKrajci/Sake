@@ -27,7 +27,7 @@ namespace GameLibrary
     {
         public Texture2D _texture;
         public Vector2 position;
-        public Queue<Vector2> body;
+        public Queue<Vector2> tail;
         public int direction; // 0 = up, next clockwise
 
         private static readonly int[] dx = { 0, 1, 0, -1 };
@@ -38,26 +38,27 @@ namespace GameLibrary
         {
             _texture = texture;
             position = initialPosition;
-            body = new Queue<Vector2>();
-            body.Enqueue(new Vector2(1, 2));
-            body.Enqueue(new Vector2(1, 3));
-            body.Enqueue(new Vector2(1, 4));
-            body.Enqueue(new Vector2(1, 5));
-            body.Enqueue(initialPosition);
+            tail = new Queue<Vector2>();
+            tail.Enqueue(new Vector2(1, 2));
+            tail.Enqueue(new Vector2(1, 3));
+            tail.Enqueue(new Vector2(1, 4));
+            tail.Enqueue(new Vector2(1, 5));
             direction = Rand.om.Next(4);
         }
         public void Move(int height, int width)
         {
+            tail.Enqueue(new Vector2(position.X, position.Y));
+            tail.Dequeue();
+            
             position.X = (position.X + width + dx[direction]) % width;
             position.Y = (position.Y + height + dy[direction]) % height;
-            body.Enqueue(new Vector2(position.X, position.Y));
-            body.Dequeue();
         }
         public void MoveTo(Vector2 destination)
         {
+            tail.Enqueue(position);
+            tail.Dequeue();
+
             position = destination;
-            body.Enqueue(destination);
-            body.Dequeue();
         }
         public void TurnRight()
         {
@@ -69,13 +70,14 @@ namespace GameLibrary
         }
         public int Length()
         {
-            return body.Count;
+            return tail.Count+1;
         }
 
 
         public void Draw(SpriteBatch spriteBatch, int cellSize)
         {
-            foreach (Vector2 v in body)
+            spriteBatch.Draw(_texture, position * cellSize, Color.White);
+            foreach (Vector2 v in tail)
                 spriteBatch.Draw(_texture, v * cellSize, Color.White);
         }
     }
