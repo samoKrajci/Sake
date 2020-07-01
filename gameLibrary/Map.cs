@@ -68,7 +68,7 @@ namespace GameLibrary
             for(int i=0; i < mapUpdatePacket.snakeCount; i++)
             {
                 if (i < snakes.Count)
-                    snakes[i].position = mapUpdatePacket.snakes[i];
+                    snakes[i].MoveTo(mapUpdatePacket.snakes[i]);
                 else
                     snakes.Add(new Snake(mapUpdatePacket.snakes[i], textures[i]));
             }
