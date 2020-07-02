@@ -113,17 +113,4 @@ namespace Client
             return true;
         }
     }
-    class Program
-    {
-        private static readonly TcpClient tcpClient = new TcpClient();
-
-        static void Main()
-        {
-            tcpClient.ConnectToServer();
-            tcpClient.RunTaskAfterResponseLoop(() => Console.WriteLine(tcpClient.LastResponse));
-
-            tcpClient.RequestLoop();
-            tcpClient.Exit();
-        }
-    }
 }

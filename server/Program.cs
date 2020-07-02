@@ -6,10 +6,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ProtocolLibrary;
-using GameLibrary;
-using Microsoft.Xna.Framework;
 using protocolLibrary;
+using gameLibrary;
+using Microsoft.Xna.Framework;
 
 namespace Server
 {
@@ -18,14 +17,13 @@ namespace Server
         private const int BUFFER_SIZE = 2048;
         private const int PORT = 100;
         private const int HEIGHT = 30, WIDTH = 50, CELLSIZE = 16;
-        private const int TPS = 2;
-        private const int maxPlayers = 3;
+        private const int TPS = 10;
+        private const int maxPlayers = 4;
 
         private static readonly Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private static List<User> users = new List<User>();
-        private static readonly byte[] buffer = new byte[BUFFER_SIZE];
         private static readonly int tickMs = 1000/TPS;
-        private static Map map;
+        private static MasterMap map;
         private static string state = "lobby";
 
         static void SendAll(string message)
@@ -38,7 +36,7 @@ namespace Server
         }
         static void PrepareGame()
         {
-            map = new Map(HEIGHT, WIDTH, CELLSIZE);
+            map = new MasterMap(HEIGHT, WIDTH, CELLSIZE);
             for (int i=0; i<users.Count; i++)
             {
                 map.AddSnakeRandomPosition();
@@ -114,8 +112,9 @@ namespace Server
                 map.AutoUpdate();
                 MapUpdatePacket mapUpdatePacket = map.CreateMapUpdatePacket();
                 Console.WriteLine("sending updated map to all users");
-                foreach (User u in users)
-                    u.SendData(Encoding.ASCII.GetBytes(mapUpdatePacket.serialized));
+                SendAll(mapUpdatePacket.serialized);
+
+                Console.WriteLine(mapUpdatePacket.serialized);
 
                 watch.Stop();
                 Console.WriteLine(String.Format("tick duration: {0}", watch.Elapsed));
@@ -228,20 +227,8 @@ namespace Server
             User user = new User("user " + users.Count.ToString(), socket);
             users.Add(user);
             Console.WriteLine(String.Format("{0} connected.", user.username));
-            /*
-            map.AddSnake(new Snake(new Vector2(Rand.om.Next() % WIDTH, Rand.om.Next() % HEIGHT)));
-            Console.WriteLine("Client connected, sending initial info...\n");
-
-            List<Vector2> snakesPositions = new List<Vector2>();
-            foreach (Snake s in map.snakes)
-                snakesPositions.Add(s.position);
-            InitialInfoPacket initialInfo = new InitialInfoPacket(HEIGHT, WIDTH, CELLSIZE, users.Count, users.Count - 1, snakesPositions);
-            byte[] data = Encoding.ASCII.GetBytes(initialInfo.serialized);
-            user.SendData(data);
-
-            Console.WriteLine("Initial info sent.\n");
-            */
-
+            Console.WriteLine(socket.RemoteEndPoint);
+            Console.WriteLine(socket.LocalEndPoint);
             //user.socket.BeginReceive(user.buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, socket);
             serverSocket.BeginAccept(AcceptCallback, null);
         }

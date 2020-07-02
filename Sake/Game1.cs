@@ -6,9 +6,8 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using Client;
 using System.Threading.Tasks;
-using ProtocolLibrary;
-using GameLibrary;
 using protocolLibrary;
+using gameLibrary;
 
 namespace Sake
 {
@@ -20,10 +19,11 @@ namespace Sake
         int HEIGHT, WIDTH, CELLSIZE;
         string state = "lobby";
 
+     
         readonly Client.TcpClient tcpClient = new Client.TcpClient();
         SnakeUser snakeUser;
-       
-        private readonly Texture2D[] textures = new Texture2D[3];
+
+        private Texture2D snakeTexture, powerupTexture;
 
         private void ResponseWrapper()
         {
@@ -35,7 +35,7 @@ namespace Sake
             else
             {
                 MapUpdatePacket mapUpdatePacket = new MapUpdatePacket(tcpClient.LastResponse);
-                map.UpdateFromMapUpdatePacket(mapUpdatePacket, textures);
+                map.UpdateFromMapUpdatePacket(mapUpdatePacket);
             }
         }
       
@@ -59,12 +59,8 @@ namespace Sake
             map = new Map(HEIGHT, WIDTH, CELLSIZE);
 
             for (int i = 0; i < initialInfo.snakeCount; i++)
-            {
                 map.AddSnake(new Snake(initialInfo.snakes[i]));
-                Debug.WriteLine(i);
-                Debug.WriteLine(map.snakes[i]._texture);
-            }
-
+      
             graphics.PreferredBackBufferHeight = map._height * map._cellSize;
             graphics.PreferredBackBufferWidth = map._width * map._cellSize;
             graphics.ApplyChanges();
@@ -79,12 +75,13 @@ namespace Sake
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            textures[0] = Content.Load<Texture2D>("cat");
-            textures[1] = Content.Load<Texture2D>("star");
-            textures[2] = Content.Load<Texture2D>("lcd");
+            snakeTexture = Content.Load<Texture2D>("star");
+            powerupTexture = Content.Load<Texture2D>("cat");
 
-            for (int i = 0; i < map.snakes.Count; i++)
-                map.snakes[i]._texture = textures[i];
+            Snake._texture = snakeTexture;
+            Powerup._texture = powerupTexture;
+            //for (int i = 0; i < map.snakes.Count; i++)
+            //    map.snakes[i]._texture = snakeTexture;
 
         }
 

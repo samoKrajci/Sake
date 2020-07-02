@@ -3,7 +3,7 @@ using protocolLibrary;
 using System;
 using System.Collections.Generic;
 
-namespace ProtocolLibrary
+namespace protocolLibrary
 {
     public class InitialInfoPacket
     {
