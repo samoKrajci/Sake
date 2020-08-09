@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using protocolLibrary;
 using Microsoft.Xna.Framework;
 using System.Diagnostics;
+using System.CodeDom.Compiler;
 
 namespace gameLibrary
 {
@@ -30,7 +31,9 @@ namespace gameLibrary
             int roll = Rand.om.Next(chance);
             if (roll == 0)
             {
-                Vector2 position = new Vector2(Rand.om.Next(_width), Rand.om.Next(_height));
+                // Vector2 position = new Vector2(Rand.om.Next(_width), Rand.om.Next(_height));
+                Vector2 position = new Vector2(0, 0);
+                if (grid[position] != "") return;
                 AddPowerup(new Powerup(position, type));
             }
         }
@@ -57,19 +60,27 @@ namespace gameLibrary
 
                 Vector2 nextMove = s.NextMove(_height, _width);
                 string field = grid[nextMove];
-                if (s.lethal.Contains(field))
+                if ((s.lethal.Contains(field)) && (s.invincible <= 0))
                 {
+                    foreach (Snake ss in snakes)
+                        if (ss.position == nextMove)
+                            ss.dead = true;
                     s.dead = true;
                     continue;
                 }
 
                 List<Vector2> freedFields;
 
-                if (field == "food")
+                List<string> pws = new List<string>{ "food", "invincibility" };
+                if (pws.Contains(field))
                 {
+                    if(field == "food")
+                        s.lastGrow = 1;
+                    if (field == "invincibility")
+                        s.invincible = 20;
+                    
                     freedFields = s.MoveTo(nextMove, 1);
                     grid[nextMove] = s._id.ToString();
-                    s.lastGrow = 1;
 
                     foreach (Powerup p in powerups)
                         if (p.position == nextMove)
@@ -87,18 +98,32 @@ namespace gameLibrary
 
                 foreach (Vector2 f in freedFields)
                 {
-                    grid[f] = "";
+                    grid[f]="";
                 }
             }
 
+            foreach (Snake s in snakes)
+            {
+                if (s.invincible > 0)
+                    s.invincible--;
+            }
+
+            generatePowerups();
+        }
+        public void generatePowerups()
+        {
             AddPowerupWithChance(20, "food");
+            AddPowerupWithChance(20, "invincibility");
+
         }
         public MapUpdatePacket CreateMapUpdatePacket()
         {
             List<SnakeInfo> snakeInfos = new List<SnakeInfo>();
             foreach(Snake s in snakes)
             {
-                SnakeInfo snakeInfo = new SnakeInfo(s.position, s.lastGrow, new List<string>(), s.dead);
+                List<string> buffs = new List<string>();
+                if (s.invincible > 0) buffs.Add("invincible");
+                SnakeInfo snakeInfo = new SnakeInfo(s.position, s.lastGrow, buffs, s.dead);
                 snakeInfos.Add(snakeInfo);
             }
             List<PowerupInfo> powerupsPlus = new List<PowerupInfo>();
@@ -146,11 +171,11 @@ namespace gameLibrary
             newSnake._id = snakes.Count;
             snakes.Add(newSnake);
         }
-        public virtual void AddSnakeRandomPosition(Texture2D texture = null)
+        public virtual void AddSnakeRandomPosition(int initialInvincibility, Texture2D texture = null)
         {
             Vector2 position = new Vector2(Rand.om.Next() % _width, Rand.om.Next() % _height);
-            Snake snake = new Snake(position, texture);
-            snakes.Add(snake);
+            Snake snake = new Snake(position, initialInvincibility, texture);
+            AddSnake(snake);
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -174,9 +199,18 @@ namespace gameLibrary
             {
                 SnakeInfo sInfo = mapUpdatePacket.snakes[i];
                 if (sInfo.dead)
+                {
                     snakes[i].dead = true;
+                    continue;
+                }
                 else
                     snakes[i].MoveTo(sInfo.newPosition, sInfo.lenDiff);
+
+                if (sInfo.buffs.Contains("invincible"))
+                    snakes[i].invincible = 10;
+                else
+                    snakes[i].invincible = 0;
+
             }
             foreach (PowerupInfo pInfo in mapUpdatePacket.powerupsMinus)
                 foreach (Powerup p in powerups)

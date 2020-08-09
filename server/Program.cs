@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using protocolLibrary;
 using gameLibrary;
 using Microsoft.Xna.Framework;
+using System.Diagnostics.Tracing;
+using Microsoft.Xna.Framework.Input;
 
 namespace Server
 {
@@ -19,10 +21,12 @@ namespace Server
         private const int HEIGHT = 30, WIDTH = 50, CELLSIZE = 16;
         private const int TPS = 10;
         private const int maxPlayers = 4;
+        private const int initialInvincibility = 3*TPS;
 
         private static readonly Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private static List<User> users = new List<User>();
-        private static readonly int tickMs = 1000/TPS;
+        private static readonly int tickMs = 1000 / TPS;
+        private static readonly int beforeStartMs = 3000;
         private static MasterMap map;
         private static string state = "lobby";
 
@@ -39,7 +43,7 @@ namespace Server
             map = new MasterMap(HEIGHT, WIDTH, CELLSIZE);
             for (int i=0; i<users.Count; i++)
             {
-                map.AddSnakeRandomPosition();
+                map.AddSnakeRandomPosition(initialInvincibility);
             }
 
             List<Vector2> snakesPositions = new List<Vector2>();
@@ -52,7 +56,7 @@ namespace Server
             for(int i=0; i<users.Count; i++)
             {
                 User user = users[i];
-                InitialInfoPacket initialInfo = new InitialInfoPacket(HEIGHT, WIDTH, CELLSIZE, users.Count, i, snakesPositions);
+                InitialInfoPacket initialInfo = new InitialInfoPacket(HEIGHT, WIDTH, CELLSIZE, users.Count, i, snakesPositions, initialInvincibility);
                 byte[] data = Encoding.ASCII.GetBytes(initialInfo.serialized);
                 try
                 {
@@ -73,10 +77,13 @@ namespace Server
         static async Task RunGameLoop(CancellationToken cancellationToken)
         {
             PrepareGame();
+            Thread.Sleep(beforeStartMs);
             Console.WriteLine("Game starting...");
             Console.WriteLine();
 
-            while (true) {
+            int aliveCount = map.snakes.Count;
+            int winner = -1;
+            while (aliveCount > 1) {
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
                 
@@ -116,10 +123,35 @@ namespace Server
 
                 Console.WriteLine(mapUpdatePacket.serialized);
 
+                aliveCount = 0;
+                foreach (Snake s in map.snakes)
+                    if (!s.dead)
+                        aliveCount++;
+
                 watch.Stop();
                 Console.WriteLine(String.Format("tick duration: {0}", watch.Elapsed));
                 Console.WriteLine();
             }
+
+            string message = "Game over!\n";
+
+            foreach (Snake s in map.snakes)
+                if (!s.dead)
+                    winner = s._id;
+
+            if (winner == -1)
+                message += "No winner :(\n";
+            else
+                message += "Snake number " + winner.ToString() + " is the winner!";
+
+            message += "\nWaiting for players...";
+            SendAll("game over");
+            CloseAllUserSockets();
+
+
+
+            state = "lobby";
+            Console.WriteLine(message);
         }
         static void GameMasterLoop()
         {

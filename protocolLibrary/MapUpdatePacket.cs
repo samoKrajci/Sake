@@ -126,7 +126,7 @@ namespace protocolLibrary
             lenDiff = Convert.ToInt32(cells[2]);
             buffs = new List<string>();
             for (int i = 0; i < buffCount; i++)
-                buffs.Add(cells[3 + i]);
+                buffs.Add(cells[4 + i]);
             dead = false;
         }
     }
@@ -147,7 +147,7 @@ namespace protocolLibrary
             string[] cells = _serialized.Split(' ');
 
             position = new Vector2(Convert.ToInt32(cells[0]), Convert.ToInt32(cells[1]));
-            type = cells[3];
+            type = cells[2];
             serialized = _serialized;
         }
     }

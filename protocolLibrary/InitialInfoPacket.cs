@@ -7,11 +7,11 @@ namespace protocolLibrary
 {
     public class InitialInfoPacket
     {
-        public readonly int height, width, cellSize, snakeCount, id;
+        public readonly int height, width, cellSize, snakeCount, id, initialInvincibility;
         public readonly List<Vector2> snakes;
         // in format "heigth width cellSize players id s1.x s1.y s2.x s2.y ..."
         public readonly string serialized;
-        public InitialInfoPacket(int _height, int _width, int _cellSize, int _snakeCount, int _id, List<Vector2> _snakes)
+        public InitialInfoPacket(int _height, int _width, int _cellSize, int _snakeCount, int _id, List<Vector2> _snakes, int _initialInvincibility)
         {
             height = _height;
             width = _width;
@@ -19,7 +19,8 @@ namespace protocolLibrary
             snakeCount = _snakeCount;
             id = _id;
             snakes = _snakes;
-            serialized = String.Format("{0} {1} {2} {3} {4} ", _height, _width, _cellSize, _snakeCount, _id);
+            initialInvincibility = _initialInvincibility;
+            serialized = String.Format("{0} {1} {2} {3} {4} {5} ", _height, _width, _cellSize, _snakeCount, _id, _initialInvincibility);
             foreach (Vector2 v in _snakes)
                 serialized += String.Format("{0} {1} ", v.X, v.Y);
         }
@@ -32,9 +33,10 @@ namespace protocolLibrary
             cellSize = c[2];
             snakeCount = c[3];
             id = c[4];
+            initialInvincibility = c[5];
             snakes = new List<Vector2>();
             for (int i = 0; i < snakeCount; i++)
-                snakes.Add(new Vector2(c[5 + 2 * i], c[6 + 2 * i]));
+                snakes.Add(new Vector2(c[6 + 2 * i], c[7 + 2 * i]));
         }
     }
 }

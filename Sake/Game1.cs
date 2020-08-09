@@ -23,7 +23,7 @@ namespace Sake
         readonly Client.TcpClient tcpClient = new Client.TcpClient();
         SnakeUser snakeUser;
 
-        private Texture2D snakeTexture, powerupTexture;
+        private Texture2D snakeTexture, foodTexture, invincibilityTexture;
 
         private void ResponseWrapper()
         {
@@ -59,7 +59,7 @@ namespace Sake
             map = new Map(HEIGHT, WIDTH, CELLSIZE);
 
             for (int i = 0; i < initialInfo.snakeCount; i++)
-                map.AddSnake(new Snake(initialInfo.snakes[i]));
+                map.AddSnake(new Snake(initialInfo.snakes[i], initialInfo.initialInvincibility));
       
             graphics.PreferredBackBufferHeight = map._height * map._cellSize;
             graphics.PreferredBackBufferWidth = map._width * map._cellSize;
@@ -76,10 +76,12 @@ namespace Sake
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             snakeTexture = Content.Load<Texture2D>("star");
-            powerupTexture = Content.Load<Texture2D>("cat");
+            foodTexture = Content.Load<Texture2D>("cat");
+            invincibilityTexture = Content.Load<Texture2D>("lcd");
 
             Snake._texture = snakeTexture;
-            Powerup._texture = powerupTexture;
+            Powerup._foodTexture = foodTexture;
+            Powerup._invincibilityTexture = invincibilityTexture;
             //for (int i = 0; i < map.snakes.Count; i++)
             //    map.snakes[i]._texture = snakeTexture;
 
