@@ -31,8 +31,7 @@ namespace gameLibrary
             int roll = Rand.om.Next(chance);
             if (roll == 0)
             {
-                // Vector2 position = new Vector2(Rand.om.Next(_width), Rand.om.Next(_height));
-                Vector2 position = new Vector2(0, 0);
+                Vector2 position = new Vector2(Rand.om.Next(_width), Rand.om.Next(_height));
                 if (grid[position] != "") return;
                 AddPowerup(new Powerup(position, type));
             }
@@ -79,7 +78,7 @@ namespace gameLibrary
                     if (field == "invincibility")
                         s.invincible = 20;
                     
-                    freedFields = s.MoveTo(nextMove, 1);
+                    freedFields = s.MoveTo(nextMove);
                     grid[nextMove] = s._id.ToString();
 
                     foreach (Powerup p in powerups)
@@ -114,6 +113,7 @@ namespace gameLibrary
         {
             AddPowerupWithChance(20, "food");
             AddPowerupWithChance(20, "invincibility");
+            AddPowerupWithChance(20, "stone");
 
         }
         public MapUpdatePacket CreateMapUpdatePacket()
@@ -204,8 +204,10 @@ namespace gameLibrary
                     continue;
                 }
                 else
-                    snakes[i].MoveTo(sInfo.newPosition, sInfo.lenDiff);
-
+                {
+                    snakes[i].lastGrow = sInfo.lenDiff;
+                    snakes[i].MoveTo(sInfo.newPosition);
+                }
                 if (sInfo.buffs.Contains("invincible"))
                     snakes[i].invincible = 10;
                 else

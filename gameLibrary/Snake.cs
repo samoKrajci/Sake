@@ -25,8 +25,8 @@ namespace gameLibrary
     }
     public class Snake
     {
-        public static Texture2D _texture;
-        public static List<Color> colors = new List<Color> { Color.Pink, Color.Red, Color.Green, Color.Blue };
+        public static Texture2D headTexture, bodyTexture;
+        public static List<Color> colors = new List<Color> { Color.Yellow, Color.Red, Color.Green, Color.Blue };
         public static Color invincibleColor = Color.White;
 
         public int _id;
@@ -34,7 +34,7 @@ namespace gameLibrary
         public Queue<Vector2> tail;
         public int direction; // 0 = up, next clockwise
        
-        public List<string> lethal = new List<string>(){ "0", "1", "2", "3"};
+        public List<string> lethal = new List<string>(){ "0", "1", "2", "3", "stone"};
         public bool dead;
         public int lastGrow;
         public int invincible = 0;
@@ -45,7 +45,7 @@ namespace gameLibrary
         
         public Snake(Vector2 initialPosition, int initialInvincibility, Texture2D texture = null)
         {
-            _texture = texture;
+            headTexture = texture;
             position = initialPosition;
             tail = new Queue<Vector2>();
             direction = Rand.om.Next(4);
@@ -57,11 +57,11 @@ namespace gameLibrary
         {
             return new Vector2((position.X + width + dx[direction]) % width, (position.Y + height + dy[direction]) % height);
         }
-        public List<Vector2> MoveTo(Vector2 destination, int lenDiff = 0)
+        public List<Vector2> MoveTo(Vector2 destination)
         {
             List<Vector2> dequeued = new List<Vector2>();
             tail.Enqueue(position);
-            int cellsToDequeue = (lenDiff - 1) * (-1);
+            int cellsToDequeue = (lastGrow - 1) * (-1);
             for (int i=0; i<cellsToDequeue; i++)
                 dequeued.Add(tail.Dequeue());
 
@@ -94,10 +94,10 @@ namespace gameLibrary
         {
             Color currentColor = colors[_id];
             
-            var origin = new Vector2(_texture.Width / 2f, _texture.Height / 2f);
+            var origin = new Vector2(headTexture.Width / 2f, headTexture.Height / 2f);
             if (invincible > 0)
-                spriteBatch.Draw(_texture, position * cellSize + origin, null, invincibleColor, (float)Math.PI / 2 * direction, origin, 1.4f, SpriteEffects.None, 0f);
-            spriteBatch.Draw(_texture, position * cellSize + origin, null, currentColor, (float)Math.PI / 2 * direction, origin, 1f, SpriteEffects.None, 0f);
+                spriteBatch.Draw(headTexture, position * cellSize + origin, null, invincibleColor, (float)Math.PI / 2 * direction, origin, 1.4f, SpriteEffects.None, 0f);
+            spriteBatch.Draw(headTexture, position * cellSize + origin, null, currentColor, (float)Math.PI / 2 * direction, origin, 1f, SpriteEffects.None, 0f);
             try
             {
                 foreach (Vector2 v in tail)
@@ -106,8 +106,8 @@ namespace gameLibrary
                     if (dead)
                         c = Color.Black;
                     else if (invincible > 0)
-                        spriteBatch.Draw(_texture, v * cellSize + origin, null, invincibleColor, 0, origin, 1.4f, SpriteEffects.None, 0f);
-                    spriteBatch.Draw(_texture, v * cellSize, c);
+                        spriteBatch.Draw(bodyTexture, v * cellSize + origin, null, invincibleColor, 0, origin, 1.4f, SpriteEffects.None, 0f);
+                    spriteBatch.Draw(bodyTexture, v * cellSize, c);
                 }
             }
             catch(System.InvalidOperationException)

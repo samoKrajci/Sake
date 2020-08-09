@@ -87,9 +87,6 @@
   <ItemGroup>
     <MonoGameContentReference Include="Content\Content.mgcb" />
     <None Include="app.manifest" />
-    <None Include="Content\cat.xnb" />
-    <None Include="Content\lcd.xnb" />
-    <None Include="Content\star.xnb" />
     <None Include="Sake_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>

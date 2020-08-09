@@ -23,7 +23,7 @@ namespace Sake
         readonly Client.TcpClient tcpClient = new Client.TcpClient();
         SnakeUser snakeUser;
 
-        private Texture2D snakeTexture, foodTexture, invincibilityTexture;
+        private Texture2D snakeHeadTexture, snakeBodyTexture, foodTexture, invincibilityTexture, stoneTexture;
 
         private void ResponseWrapper()
         {
@@ -75,13 +75,17 @@ namespace Sake
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            snakeTexture = Content.Load<Texture2D>("star");
-            foodTexture = Content.Load<Texture2D>("cat");
-            invincibilityTexture = Content.Load<Texture2D>("lcd");
+            snakeHeadTexture = Content.Load<Texture2D>("head");
+            snakeBodyTexture = Content.Load<Texture2D>("body");
+            foodTexture = Content.Load<Texture2D>("food");
+            invincibilityTexture = Content.Load<Texture2D>("invincibility");
+            stoneTexture = Content.Load<Texture2D>("stone");
 
-            Snake._texture = snakeTexture;
+            Snake.headTexture = snakeHeadTexture;
+            Snake.bodyTexture = snakeBodyTexture;
             Powerup._foodTexture = foodTexture;
             Powerup._invincibilityTexture = invincibilityTexture;
+            Powerup._stoneTexture = stoneTexture;
             //for (int i = 0; i < map.snakes.Count; i++)
             //    map.snakes[i]._texture = snakeTexture;
 
