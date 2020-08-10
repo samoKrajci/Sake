@@ -37,7 +37,9 @@ namespace gameLibrary
         public List<string> lethal = new List<string>(){ "0", "1", "2", "3", "stone"};
         public bool 
             dead,
-            frozen;
+            frozen,
+            reverseNext,
+            reversed;
         public int 
             lastGrow,
             invincible,
@@ -58,6 +60,8 @@ namespace gameLibrary
             invincible = initialInvincibility;
             slow = 0;
             nextDir = "";
+            reverseNext = false;
+            reversed = false;
         }
         public Vector2 NextMove(int height, int width)
         {
@@ -90,10 +94,16 @@ namespace gameLibrary
         {
             direction = (direction + 3) % 4;
         }
-        public void autoTurn()
+        public void AutoTurn()
         {
             if (nextDir == "r") TurnRight();
             else if (nextDir == "l") TurnLeft();
+        }
+        public void Reverse()
+        {
+            tail = new Queue<Vector2>(tail.Reverse());
+            TurnLeft();
+            TurnLeft();
         }
         public int Length()
         {

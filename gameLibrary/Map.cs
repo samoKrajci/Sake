@@ -60,19 +60,30 @@ namespace gameLibrary
                 if (s.dead)
                     continue;
 
+                s.AutoTurn();
+                Vector2 nextMove = s.NextMove(_height, _width);
+                string field = grid[nextMove];
+
                 s.lastGrow = Math.Max(s.lastGrow - 1, 0);
-                
+
+                s.reversed = false;
                 if(s.slow > 0)
                 {
                     s.frozen = !s.frozen;
                     s.slow--;
                     if (s.frozen) continue;
                 }
+                else if (s.reverseNext)
+                {
+                    if (s.tail.Any())
+                        nextMove = s.tail.Peek();
+                    else
+                        nextMove = s.position;
+                    s.reversed = true;
+                    s.reverseNext = false;
+                }
+                
 
-                s.autoTurn();
-
-                Vector2 nextMove = s.NextMove(_height, _width);
-                string field = grid[nextMove];
                 if ((s.lethal.Contains(field)) && (s.invincible <= 0))
                 {
                     foreach (Snake ss in snakes)
@@ -84,7 +95,7 @@ namespace gameLibrary
 
                 List<Vector2> freedFields;
 
-                List<string> pws = new List<string>{ "food", "invincibility", "slow", "megaFood"};
+                List<string> pws = new List<string>{ "food", "invincibility", "slow", "megaFood", "reverse"};
                 if (pws.Contains(field))
                 {
                     if (field == "food")
@@ -95,9 +106,12 @@ namespace gameLibrary
                         s.invincible = invincibilityDuration;
                     if (field == "slow")
                         s.slow = slowDuration;
-
+                    if (field == "reverse")
+                        s.reverseNext = true;
+                  
                     freedFields = s.MoveTo(nextMove);
                     grid[nextMove] = s._id.ToString();
+
 
                     foreach (Powerup p in powerups)
                         if (p.position == nextMove)
@@ -117,6 +131,12 @@ namespace gameLibrary
                 {
                     grid[f]="";
                 }
+
+                if (s.reversed)
+                {
+                    s.Reverse();
+                    grid[s.position] = s._id.ToString();
+                }
             }
 
             foreach (Snake s in snakes)
@@ -125,15 +145,16 @@ namespace gameLibrary
                     s.invincible--;
             }
 
-            generatePowerups();
+            GeneratePowerups();
         }
-        public void generatePowerups()
+        public void GeneratePowerups()
         {
             AddPowerupWithChance(20, "food");
-            AddPowerupWithChance(20, "megaFood");
+            AddPowerupWithChance(2000, "megaFood");
             AddPowerupWithChance(20, "invincibility");
             AddPowerupWithChance(1000, "stone");
             AddPowerupWithChance(20000, "slow");
+            AddPowerupWithChance(20, "reverse");
         }
         public MapUpdatePacket CreateMapUpdatePacket()
         {
@@ -143,6 +164,7 @@ namespace gameLibrary
                 List<string> buffs = new List<string>();
                 if (s.invincible > 0) buffs.Add("invincible");
                 if (s.frozen) buffs.Add("frozen");
+                if (s.reversed) buffs.Add("reversed");
                 SnakeInfo snakeInfo = new SnakeInfo(s.position, s.lastGrow, buffs, s.dead);
                 snakeInfos.Add(snakeInfo);
             }
@@ -223,6 +245,7 @@ namespace gameLibrary
                     snakes[i].invincible = 1;
                 else
                     snakes[i].invincible = 0;
+                if (sInfo.buffs.Contains("reversed")) snakes[i].Reverse();
 
             }
             foreach (PowerupInfo pInfo in mapUpdatePacket.powerupsMinus)
