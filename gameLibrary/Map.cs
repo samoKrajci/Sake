@@ -20,8 +20,8 @@ namespace gameLibrary
         private const int
             foodGrow = 1,
             megaFoodGrow = 5,
-            invincibilityDuration = 20,
-            slowDuration = 20;
+            invincibilityDuration = 30,
+            slowDuration = 40;
 
         public MasterMap(int height, int width, int cellSize) : base(height, width, cellSize)
         {
@@ -107,7 +107,10 @@ namespace gameLibrary
                     if (field == "slow")
                         s.slow = slowDuration;
                     if (field == "reverse")
+                    {
                         s.reverseNext = true;
+                        s.lastGrow = 0;
+                    }
                   
                     freedFields = s.MoveTo(nextMove);
                     grid[nextMove] = s._id.ToString();
@@ -150,11 +153,11 @@ namespace gameLibrary
         public void GeneratePowerups()
         {
             AddPowerupWithChance(20, "food");
-            AddPowerupWithChance(2000, "megaFood");
-            AddPowerupWithChance(20, "invincibility");
-            AddPowerupWithChance(1000, "stone");
-            AddPowerupWithChance(20000, "slow");
-            AddPowerupWithChance(20, "reverse");
+            AddPowerupWithChance(120, "megaFood");
+            AddPowerupWithChance(100, "invincibility");
+            AddPowerupWithChance(50, "stone");
+            AddPowerupWithChance(60, "slow");
+            AddPowerupWithChance(150, "reverse");
         }
         public MapUpdatePacket CreateMapUpdatePacket()
         {

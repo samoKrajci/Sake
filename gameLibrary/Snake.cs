@@ -101,9 +101,19 @@ namespace gameLibrary
         }
         public void Reverse()
         {
+            if (tail.Any())
+            {
+                Vector2 lastItem = tail.Peek();
+                for (int i = 0; i < 4; i++)
+                    if (lastItem + (new Vector2(dx[i], dy[i])) == position)
+                        direction = i;
+            }
+            else
+            {
+                TurnLeft();
+                TurnLeft();
+            }
             tail = new Queue<Vector2>(tail.Reverse());
-            TurnLeft();
-            TurnLeft();
         }
         public int Length()
         {

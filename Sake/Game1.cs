@@ -88,9 +88,9 @@ namespace Sake
             foodTexture = Content.Load<Texture2D>("food");
             invincibilityTexture = Content.Load<Texture2D>("invincibility");
             stoneTexture = Content.Load<Texture2D>("stone");
-            slowTexture = Content.Load<Texture2D>("star");
-            megaFoodTexture = Content.Load<Texture2D>("star");
-            reverseTexture = Content.Load<Texture2D>("star");
+            slowTexture = Content.Load<Texture2D>("slow");
+            megaFoodTexture = Content.Load<Texture2D>("megaFood");
+            reverseTexture = Content.Load<Texture2D>("reverse");
 
             Snake.headTexture = snakeHeadTexture;
             Snake.bodyTexture = snakeBodyTexture;
