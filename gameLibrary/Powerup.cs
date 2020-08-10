@@ -10,7 +10,7 @@ namespace gameLibrary
 {
     public class Powerup
     {
-        public static Texture2D _foodTexture, _invincibilityTexture, _stoneTexture;
+        public static Texture2D _foodTexture, _invincibilityTexture, _stoneTexture, _slowTexture, _megaFoodTexture;
 
         public Vector2 position;
         public string type;
@@ -29,6 +29,10 @@ namespace gameLibrary
                 texture = _invincibilityTexture;
             else if (type == "stone")
                 texture = _stoneTexture;
+            else if (type == "slow")
+                texture = _slowTexture;
+            else if (type == "megaFood")
+                texture = _megaFoodTexture;
             spriteBatch.Draw(texture, position * cellSize, Color.White);
         }
     }

@@ -17,6 +17,11 @@ namespace gameLibrary
         public List<Powerup> addedPowerups = new List<Powerup>();
         public List<Powerup> removedPowerups = new List<Powerup>();
 
+        private const int
+            foodGrow = 1,
+            megaFoodGrow = 5,
+            invincibilityDuration = 20,
+            slowDuration = 20;
 
         public MasterMap(int height, int width, int cellSize) : base(height, width, cellSize)
         {
@@ -55,7 +60,16 @@ namespace gameLibrary
                 if (s.dead)
                     continue;
 
-                s.lastGrow = 0;
+                s.lastGrow = Math.Max(s.lastGrow - 1, 0);
+                
+                if(s.slow > 0)
+                {
+                    s.frozen = !s.frozen;
+                    s.slow--;
+                    if (s.frozen) continue;
+                }
+
+                s.autoTurn();
 
                 Vector2 nextMove = s.NextMove(_height, _width);
                 string field = grid[nextMove];
@@ -70,14 +84,18 @@ namespace gameLibrary
 
                 List<Vector2> freedFields;
 
-                List<string> pws = new List<string>{ "food", "invincibility" };
+                List<string> pws = new List<string>{ "food", "invincibility", "slow", "megaFood"};
                 if (pws.Contains(field))
                 {
-                    if(field == "food")
-                        s.lastGrow = 1;
+                    if (field == "food")
+                        s.lastGrow += foodGrow;
+                    if (field == "megaFood")
+                        s.lastGrow += megaFoodGrow;
                     if (field == "invincibility")
-                        s.invincible = 20;
-                    
+                        s.invincible = invincibilityDuration;
+                    if (field == "slow")
+                        s.slow = slowDuration;
+
                     freedFields = s.MoveTo(nextMove);
                     grid[nextMove] = s._id.ToString();
 
@@ -112,9 +130,10 @@ namespace gameLibrary
         public void generatePowerups()
         {
             AddPowerupWithChance(20, "food");
+            AddPowerupWithChance(20, "megaFood");
             AddPowerupWithChance(20, "invincibility");
-            AddPowerupWithChance(20, "stone");
-
+            AddPowerupWithChance(1000, "stone");
+            AddPowerupWithChance(20000, "slow");
         }
         public MapUpdatePacket CreateMapUpdatePacket()
         {
@@ -123,6 +142,7 @@ namespace gameLibrary
             {
                 List<string> buffs = new List<string>();
                 if (s.invincible > 0) buffs.Add("invincible");
+                if (s.frozen) buffs.Add("frozen");
                 SnakeInfo snakeInfo = new SnakeInfo(s.position, s.lastGrow, buffs, s.dead);
                 snakeInfos.Add(snakeInfo);
             }
@@ -155,16 +175,6 @@ namespace gameLibrary
             this._height = height;
             this._width = width;
             this._cellSize = cellSize;
-        }
-        public void ChangeDirectionAllSnakes(string dir)
-        {
-            foreach (Snake s in snakes)
-            {
-                if (dir == "r")
-                    s.TurnRight();
-                else if (dir == "l")
-                    s.TurnLeft();
-            }
         }
         public virtual void AddSnake(Snake newSnake)
         {
@@ -203,13 +213,14 @@ namespace gameLibrary
                     snakes[i].dead = true;
                     continue;
                 }
+                else if (sInfo.buffs.Contains("frozen")) ; //do nothing
                 else
                 {
                     snakes[i].lastGrow = sInfo.lenDiff;
                     snakes[i].MoveTo(sInfo.newPosition);
                 }
                 if (sInfo.buffs.Contains("invincible"))
-                    snakes[i].invincible = 10;
+                    snakes[i].invincible = 1;
                 else
                     snakes[i].invincible = 0;
 

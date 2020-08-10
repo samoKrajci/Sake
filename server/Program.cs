@@ -110,10 +110,7 @@ namespace Server
                 {
                     Snake snake = map.snakes[Convert.ToInt32(item.Split(' ')[0])];
                     string direction = item.Split(' ')[1];
-                    if (direction == "r")
-                        snake.TurnRight();
-                    else if (direction == "l")
-                        snake.TurnLeft();
+                    snake.nextDir = direction;
                 }
 
                 map.AutoUpdate();

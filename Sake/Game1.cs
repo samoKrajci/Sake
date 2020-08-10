@@ -23,7 +23,7 @@ namespace Sake
         readonly Client.TcpClient tcpClient = new Client.TcpClient();
         SnakeUser snakeUser;
 
-        private Texture2D snakeHeadTexture, snakeBodyTexture, foodTexture, invincibilityTexture, stoneTexture;
+        private Texture2D snakeHeadTexture, snakeBodyTexture, foodTexture, invincibilityTexture, stoneTexture, slowTexture, megaFoodTexture;
 
         private void ResponseWrapper()
         {
@@ -80,12 +80,16 @@ namespace Sake
             foodTexture = Content.Load<Texture2D>("food");
             invincibilityTexture = Content.Load<Texture2D>("invincibility");
             stoneTexture = Content.Load<Texture2D>("stone");
+            slowTexture = Content.Load<Texture2D>("star");
+            megaFoodTexture = Content.Load<Texture2D>("star");
 
             Snake.headTexture = snakeHeadTexture;
             Snake.bodyTexture = snakeBodyTexture;
             Powerup._foodTexture = foodTexture;
             Powerup._invincibilityTexture = invincibilityTexture;
             Powerup._stoneTexture = stoneTexture;
+            Powerup._slowTexture = slowTexture;
+            Powerup._megaFoodTexture = megaFoodTexture;
             //for (int i = 0; i < map.snakes.Count; i++)
             //    map.snakes[i]._texture = snakeTexture;
 

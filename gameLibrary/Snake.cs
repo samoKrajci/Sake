@@ -35,10 +35,14 @@ namespace gameLibrary
         public int direction; // 0 = up, next clockwise
        
         public List<string> lethal = new List<string>(){ "0", "1", "2", "3", "stone"};
-        public bool dead;
-        public int lastGrow;
-        public int invincible = 0;
-
+        public bool 
+            dead,
+            frozen;
+        public int 
+            lastGrow,
+            invincible,
+            slow;
+        public string nextDir;
         private static readonly int[] dx = { 0, 1, 0, -1 };
         private static readonly int[] dy = { -1, 0, 1, 0 };
 
@@ -52,6 +56,8 @@ namespace gameLibrary
             dead = false;
             lastGrow = 0;
             invincible = initialInvincibility;
+            slow = 0;
+            nextDir = "";
         }
         public Vector2 NextMove(int height, int width)
         {
@@ -83,6 +89,11 @@ namespace gameLibrary
         public void TurnLeft()
         {
             direction = (direction + 3) % 4;
+        }
+        public void autoTurn()
+        {
+            if (nextDir == "r") TurnRight();
+            else if (nextDir == "l") TurnLeft();
         }
         public int Length()
         {
