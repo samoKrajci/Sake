@@ -140,12 +140,11 @@ namespace Server
                 message += "No winner :(\n";
             else
                 message += "Snake number " + winner.ToString() + " is the winner!";
-
-            message += "\nWaiting for players...";
             SendAll("game over");
+
             CloseAllUserSockets();
 
-
+            message += "\nWaiting for players...";
 
             state = "lobby";
             Console.WriteLine(message);
@@ -199,7 +198,7 @@ namespace Server
             SetupServer();
             GameMasterLoop();
 
-            Console.ReadLine(); // When we press enter close everything
+            Console.ReadLine();
             CloseAllUserSockets();
             serverSocket.Close();
         }
@@ -260,71 +259,6 @@ namespace Server
             Console.WriteLine(socket.LocalEndPoint);
             //user.socket.BeginReceive(user.buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, socket);
             serverSocket.BeginAccept(AcceptCallback, null);
-        }
-
-        // toto sa vlastne moze vymazat asi
-        private static void ReceiveCallback(IAsyncResult AR)
-        {
-            Socket currentSocket = (Socket)AR.AsyncState;
-            User noUser = new User("noUser", currentSocket);
-            User current = noUser;
-
-            foreach (User u in users)
-            {
-                if (currentSocket == u.socket)
-                {
-                    current = u;
-                    break;
-                }
-            }
-
-            int received;
-
-            try
-            {
-                received = current.socket.EndReceive(AR);
-            }
-            catch (SocketException)
-            {
-                Console.WriteLine("Client forcefully disconnected");
-                // Don't shutdown because the socket may be disposed and its disconnected anyway.
-                current.socket.Close();
-                users.Remove(current);
-                return;
-            }
-
-            Console.Write(received);
-            byte[] recBuf = new byte[received];
-            Array.Copy(current.buffer, recBuf, received);
-            string text = Encoding.ASCII.GetString(recBuf);
-            Console.WriteLine(current.username + ":");
-            Console.WriteLine(current.socket.LocalEndPoint.ToString());
-
-            Console.WriteLine("received Text: " + text);
-
-            if (text.ToLower() == "exit") // Client wants to exit gracefully
-            {
-                // Always Shutdown before closing
-                current.socket.Shutdown(SocketShutdown.Both);
-                current.socket.Close();
-                users.Remove(current);
-                Console.WriteLine("Client disconnected");
-                return;
-            }
-            else
-            {
-                string[] msg = text.ToLower().Split(' ');
-                Snake s = map.snakes[Convert.ToInt32(msg[0])];
-                if (msg[1] == "r")
-                    s.TurnRight();
-                else if (msg[1] == "l")
-                    s.TurnLeft();
-                current.moveReceived = true;
-                
-                Console.WriteLine(String.Format("From {0}(snake {1}) received: {2}", current.username, msg[0], msg[1] ));
-            }
-
-            current.socket.BeginReceive(current.buffer, 0, BUFFER_SIZE, SocketFlags.None, ReceiveCallback, current.socket);
         }
     }
 }

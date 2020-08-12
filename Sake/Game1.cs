@@ -1,13 +1,14 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
+using System.Threading;
 using System.Diagnostics;
 using System.Net.Sockets;
 using Client;
 using System.Threading.Tasks;
 using protocolLibrary;
 using gameLibrary;
+using System;
 
 namespace Sake
 {
@@ -33,13 +34,27 @@ namespace Sake
             megaFoodTexture, 
             reverseTexture;
 
+        private SpriteFont someFont;
+
+        private string postgameMessage;
+
         private void ResponseWrapper()
         {
             string response = tcpClient.LastResponse;
             if (response == "requesting move")
                 tcpClient.SendRequest(snakeUser.SendNextDireciton());
             else if (response == "game over")
-                this.Exit();
+            {
+                state = "postgame";
+                string winner = map.getWinner();
+                if (winner == "none")
+                    postgameMessage = "Everyone lost";
+                else if (winner == "multiple")
+                    postgameMessage = "server fail";
+                else
+                    postgameMessage = String.Format("{0} won!", winner);
+                tcpClient.Disconnect();
+            }
             else
             {
                 MapUpdatePacket mapUpdatePacket = new MapUpdatePacket(tcpClient.LastResponse);
@@ -68,13 +83,13 @@ namespace Sake
 
             for (int i = 0; i < initialInfo.snakeCount; i++)
                 map.AddSnake(new Snake(initialInfo.snakes[i], initialInfo.initialInvincibility));
-      
+
             graphics.PreferredBackBufferHeight = map._height * map._cellSize;
             graphics.PreferredBackBufferWidth = map._width * map._cellSize;
             graphics.ApplyChanges();
 
             _ = tcpClient.RunTaskAfterResponseLoopAsync(() => ResponseWrapper());
-
+            
             base.Initialize();
         }
 
@@ -92,6 +107,8 @@ namespace Sake
             megaFoodTexture = Content.Load<Texture2D>("megaFood");
             reverseTexture = Content.Load<Texture2D>("reverse");
 
+            someFont = Content.Load<SpriteFont>("fonts/SomeFont");
+
             Snake.headTexture = snakeHeadTexture;
             Snake.bodyTexture = snakeBodyTexture;
             Powerup._foodTexture = foodTexture;
@@ -100,8 +117,6 @@ namespace Sake
             Powerup._slowTexture = slowTexture;
             Powerup._megaFoodTexture = megaFoodTexture;
             Powerup._reverseTexture = reverseTexture;
-            //for (int i = 0; i < map.snakes.Count; i++)
-            //    map.snakes[i]._texture = snakeTexture;
 
         }
 
@@ -114,11 +129,18 @@ namespace Sake
         {
             Keyboard.GetState();
 
-            if (Keyboard.HasBeenPressed(Keys.Right))
-                snakeUser.nextDirection = "r";
-            else if (Keyboard.HasBeenPressed(Keys.Left))
-                snakeUser.nextDirection = "l";
-
+            if (state == "game")
+            {
+                if (Keyboard.HasBeenPressed(Keys.Right))
+                    snakeUser.nextDirection = "r";
+                else if (Keyboard.HasBeenPressed(Keys.Left))
+                    snakeUser.nextDirection = "l";
+            }
+            else if (state == "postgame")
+            {
+                if (Keyboard.HasBeenPressed(Keys.Space))
+                    this.Exit();
+            }
             base.Update(gameTime);
         }
 
@@ -129,10 +151,18 @@ namespace Sake
 
             if (state == "lobby")
                 return;
-
             spriteBatch.Begin();
 
             map.Draw(spriteBatch);
+
+            if (state == "postgame")
+            {
+                spriteBatch.DrawString(someFont, postgameMessage, new Vector2(WIDTH / 2 * CELLSIZE - 100, HEIGHT / 2 * CELLSIZE - 20), Color.White);
+                spriteBatch.DrawString(someFont, "press [space] to exit", new Vector2(WIDTH / 2 * CELLSIZE - 100, HEIGHT * CELLSIZE - 40), Color.White);
+            }
+            else if (map.snakes[snakeUser._id].dead)
+                spriteBatch.DrawString(someFont, "Game Over!", new Vector2(WIDTH / 2 * CELLSIZE - 100, HEIGHT / 2 * CELLSIZE - 20), Color.White);
+
 
             spriteBatch.End();
 

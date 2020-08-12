@@ -27,6 +27,7 @@ namespace gameLibrary
     {
         public static Texture2D headTexture, bodyTexture;
         public static List<Color> colors = new List<Color> { Color.Yellow, Color.Red, Color.Green, Color.Blue };
+        public static string[] colorsStr ={ "Yellow", "Red", "Green", "Blue" };
         public static Color invincibleColor = Color.White;
 
         public int _id;

@@ -4,6 +4,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Linq.Expressions;
 
 namespace Client
 {
@@ -25,7 +26,8 @@ namespace Client
                     attempts++;
                     Console.WriteLine("Connection attempt " + attempts);
                     // Change IPAddress.Loopback to a remote IP to connect to a remote host.
-                    ClientSocket.Connect(IPAddress.Loopback, PORT);
+                    //ClientSocket.Connect(IPAddress.Loopback, PORT);
+                    ClientSocket.Connect("192.168.100.39", PORT);
                 }
                 catch (SocketException)
                 {
@@ -60,6 +62,16 @@ namespace Client
             ClientSocket.Close();
             Environment.Exit(0);
         }
+        public void Disconnect()
+        {
+            SendString("exit");
+            try
+            {
+                ClientSocket.Shutdown(SocketShutdown.Both);
+                ClientSocket.Close();
+            }
+            catch (ObjectDisposedException) {; }
+        }
 
         public void SendRequest(string request)
         {
@@ -75,7 +87,11 @@ namespace Client
         public void SendString(string text)
         {
             byte[] buffer = Encoding.ASCII.GetBytes(text);
-            ClientSocket.Send(buffer, 0, buffer.Length, SocketFlags.None);
+            try
+            {
+                ClientSocket.Send(buffer, 0, buffer.Length, SocketFlags.None);
+            }
+            catch (ObjectDisposedException) {; }
         }
         public Task RunTaskAfterResponseLoopAsync(Action action)
         {
@@ -102,7 +118,13 @@ namespace Client
         private bool ReceiveResponse()
         {
             var buffer = new byte[2048];
-            int receivedTcp = ClientSocket.Receive(buffer, SocketFlags.None);
+            int receivedTcp;
+            try
+            {
+                receivedTcp = ClientSocket.Receive(buffer, SocketFlags.None);
+            }
+            catch (ObjectDisposedException) {return false;}
+            
             if (receivedTcp == 0)
             {
                 return false;

@@ -261,5 +261,21 @@ namespace gameLibrary
             foreach (PowerupInfo pInfo in mapUpdatePacket.powerupsPlus)
                 powerups.Add(new Powerup(pInfo.position, pInfo.type));
         }
+
+        public string getWinner()
+        {
+            int winnerId = -1;
+            foreach(Snake s in snakes)
+                if (!s.dead)
+                {
+                    if (winnerId == -1)
+                        winnerId = s._id;
+                    else
+                        return "multiple";
+                }
+            if (winnerId == -1)
+                return "none";
+            return Snake.colorsStr[winnerId];
+        }
     }
 }
