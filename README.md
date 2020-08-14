@@ -3,6 +3,8 @@ A project for programming class (year 1, term 2) at Charles University, Prague.
 
 Sake is an arcade-like multiplayer game. Last snake slithering wins.
 
+Using monogame C# library.
+
 ## How to run the game
 
 In order to run the game, server must be also running. 
