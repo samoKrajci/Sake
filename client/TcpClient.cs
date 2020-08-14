@@ -14,6 +14,12 @@ namespace Client
             (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private readonly int PORT = 100;
         public string LastResponse = "none response yet";
+        string serverAddress;
+
+        public TcpClient(string servAdd)
+        {
+            serverAddress = servAdd;
+        }
 
         public void ConnectToServer()
         {
@@ -25,9 +31,11 @@ namespace Client
                 {
                     attempts++;
                     Console.WriteLine("Connection attempt " + attempts);
-                    // Change IPAddress.Loopback to a remote IP to connect to a remote host.
-                    //ClientSocket.Connect(IPAddress.Loopback, PORT);
-                    ClientSocket.Connect("192.168.100.39", PORT);
+                    //go to settings file to change IP address of the server. For localhost use 'localhost'
+                    if(serverAddress == "localhost")
+                        ClientSocket.Connect(IPAddress.Loopback, PORT);
+                    else
+                        ClientSocket.Connect(serverAddress, PORT);
                 }
                 catch (SocketException)
                 {

@@ -19,9 +19,10 @@ namespace Sake
         Map map;
         int HEIGHT, WIDTH, CELLSIZE;
         string state = "lobby";
+        string serverAddress = Sake.Properties.Settings.Default.serverAddress;
 
      
-        readonly Client.TcpClient tcpClient = new Client.TcpClient();
+        readonly Client.TcpClient tcpClient = new Client.TcpClient("localhost");
         SnakeUser snakeUser;
 
         private Texture2D 
