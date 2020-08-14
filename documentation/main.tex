@@ -1,0 +1,176 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, total={6.5in, 10in}]{geometry}
+\setlength{\parindent}{0pt}
+\usepackage{mathtools}
+\usepackage{tcolorbox}
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usepackage{makecell}
+
+\renewcommand\theadalign{bc}
+\renewcommand\theadfont{\bfseries}
+\renewcommand\theadgape{\Gape[4pt]}
+\renewcommand\cellgape{\Gape[4pt]}
+
+\usepackage{listings}
+\usepackage{color}
+\definecolor{lightgray}{gray}{0.95}
+
+\lstset{
+    showstringspaces=false,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color[grey]{0.6},
+    stringstyle=\color[RGB]{255,150,75}
+}
+
+\newcommand{\code}[1]{\colorbox{lightgray}{\lstinline{#1}}}
+
+\title{Sake}
+\author{Samuel Krajči}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Úvod}
+
+Základné pokyny pre užívateľa sa nachádzajú v \code{README.md} v git repozitári:
+
+\bigskip
+
+\begin{tcolorbox}
+\input{readme.tex}
+\end{tcolorbox}
+
+\pagebreak
+\section{Viac o hre}
+
+Hra je inšpirovaná klasickou hrou \textit{Snake} a online hrou \textit{Curve Fever}. Každý hráč má svojho hada ktorého vie ovládať, cieľom je ostať posledný v hre. Hady sa pohybujú po štvorčekovej sieti na tóruse (vedia prechádzať cez okraje), vedia sa pohybovať iba do štyroch smerov. Hra prebieha v \textit{kolách}, teda diskrétne, nie spojito, za sekundu sa štandardne udeje 10 kôl.V hre sa nachádzjú iba dva typy objektov. Hady a \textit{powerupy}. 
+
+\subsection{Powerupy}
+Hady vedia zbierať powerupy tak, že cez ne prejdú. Powerupy môžu dať hadu \textit{vlastnosť}, alebo vykonajú \textit{okamžitú akciu}. Powerupy sa objavujú v náhodných časoch a na náhodných miestach, každý s inou pravdepodobnosťou. V hre je 6 powerupov:
+
+\begin{itemize}
+    \item \textbf{food} \textit{(jablko)}: ako v klasickom \textit{snake}, had narastie o 1 políčko.
+    \item \textbf{mega food} \textit{(hamburger)}: podoblné ako \textit{food}, ale had narastie o 5 políčok.
+    \item \textbf{invincibility} \textit{(zlatá huba)}: spraví hada nesmrteľným na 30 kôl.
+    \item \textbf{slow} \textit{(slimák)}: spraví hada dva krát pomalším, hýbe sa len každé druhé kolo po dobu 40 kôl.
+    \item \textbf{reverse} \textit{(zrkadlo)}: obráti hada. Hlavu má tam, kde mal chvost a naopak. 
+    \item \textbf{stone} \textit{(kameň)}: tento powerup sa nedá zobrať, je to iba prekážka, do ktorej ak had narazí, zomrie.
+\end{itemize}
+
+\subsection{Smrť}
+Had vie zomrieť iba dvoma spôsobmi:
+\begin{itemize}
+    \item nabúraním do kameňa (\textit{stone}),
+    \item alebo nabúraním do hociakého hada, vrátane seba.
+\end{itemize}
+
+Ak je had nesmrteľný (po vzatí powerupu \textit{invincibility}), nevie zomrieť ani jedným z týchto spôsobov.
+
+\pagebreak
+\section{Štruktúra programu}
+
+Program pooužíva knižnicu \textit{MonoGame}.
+
+Hra je zložená z dvoch projektov (\textit{server} a \textit{klient} (\textit{Sake})) a štyroch knižníc (\textit{constants}, \textit{game library}, \textit{protocol library} a \textit{client library}).
+
+\subsection{Knižnice}
+
+\subsubsection{Constants}
+
+Tu nájdeme všetky konštanty ako napríklad \textit{rozmery mapy}, alebo \textit{trvania powerupov}.
+
+\subsubsection{Game library}
+
+Obsahuje viditeľné objekty v hre:
+
+\paragraph{Snake}\mbox{} \\
+
+Táto trieda predstavuje hada. Má všetky vlastnosti popisujúce hada ako \textit{dĺžka}, \textit{poloha}, \textit{smer} alebo jeho stav (ktorý je ovplyvňovaný \textit{powerupmi}). Taktiež má metódy, ktoré s ním hýbu, alebo ho vykresľujú.
+
+\medskip
+Má podtriedu \textit{SnakeUser}, ktorá obsahuje navyše iba nasledujúci smer hada.
+
+\paragraph{Powerup}\mbox{} \\
+
+Jednoduchá trieda, objekt triedy predstavuje powerup, ktorý má priradený \textit{typ}, \textit{polohu} a \textit{textúru}. Má iba metódu na vykreslenie.
+
+\paragraph{Map}\mbox{} \\
+
+Táto trieda popisuje celú hraciu plochu (resp. \textit{mapu}). Obsahuje \textit{rozmery mapy}, \textit{zoznam hadov} a \textit{zoznam powerupov}, a metódu \textit{updateFromMapUpdatePacket}, ktorá mení stav mapy, bližšie to popíšeme pri \textit{klient - server komunikácii}.
+
+\medskip
+Zložitejšia je ale podtrieda \textit{MasterMap}, ktorá má (pre efektívu detekciu kolízií) navyše 
+
+\begin{itemize}
+    \item (pre efektívu detekciu kolízií) uložený obsah každého políčka na mape (v slovníku),
+    \item metódu na \textit{generovanie powerupov},
+    \item metódu na \textit{vykreslenie}, celej mapy, zavolá iba vykreslenie všetkých objektov ktoré sa na nej nachádzajú,
+    \item metódu \textit{AutoUpdate}, ktorá sa volá v každom kole a \textit{updatene stav celej mapy},
+    \item a metódu \textit{createMapUpdatePacket}, ktorú bližšie popíšeme v \textit{klient - server komunikácii}.
+\end{itemize}
+
+Program \textit{klienta} používa popis stavu mapy triedu \textit{Map} a \textit{server} používa \textit{MasterMap}, viac v \textit{klient - server komunikácii}.
+
+\paragraph{Rand}\mbox{} \\
+
+Statická trieda na generovanie náhodných čísel.
+
+\subsubsection{Client library}
+
+Tu sa nachádza iba jedna trieda \textit{TcpClient}, ktorá obsahuje objekt striedy \textit{Socket} z knižnice \textit{System.Net.Sockets}. Objekt tejto triedy je v programe \textit{klienta} a zabezpečuje komunikáciu so serverom cez \textit{TCP protokol}. Má teda všetky potrebné metódy ako napríklad \textit{connectToServer}, \textit{disconnect}, \textit{requestLoop}, ...
+
+\subsubsection{Protocol library}
+
+Tu nájdeme štyri triedy paketov, ktoré sa v komunikácii používajú. Každá trieda má niekoľko parametrov a navyše má aj jeden parameter typu string (\textit{serialized}) v ktorom sú parametre objektu serializované a teda sú pripravené byť \textit{payload} v \textit{TCP pakete}. 
+
+\begin{itemize}
+    \item \textbf{PowerupInfo} - popisuje stav powerupu,
+    \item \textbf{SnakeInfo} - popisuje stav hada,
+    \item \textbf{MapInfo} - popisuje zmenu stavu mapy,
+    \item \textbf{InitialInfo} popisuje počiatočný stav mapy.
+\end{itemize}
+
+Každá trieda má dva typy konštruktorov - \textit{zo serializovaného stringu} a \textit{klasický, explicitný} a teda vieme jednoducho informácie serializovať alebo rozbaliť.
+
+\subsection{Klient}
+
+Klient si sa skladá vpodstate iba z troch objektov - \textit{TcpClient}, \textit{Map} a \textit{SnakeUser}. O vykresľovanie sa stará kližnica \textit{MonoGame}. 
+
+Na klientovi bežia dva procesy paralelne - \textit{Update}, ktorý vykresľuje mapu a paralelne \textit{RunTaskAfterResponseLoopAsync}, funkcia objektu \textit{TcpClient}, ktorá sa stará o komunikáciu so serverom.
+
+\subsection{Server}
+
+Server sa skladá vpodstate iba z dvoch objektov - \textit{MasterMap} ktorý popisuje stav celej hry a \textit{Socket}, objekt knižnice \textit{System.Net.Sockets}, ktorý odosiela pakety klientom.
+
+\subsection{Klient - server komunikácia}
+
+Komunikácia prebieha cez \textit{TCP protokol}. \textit{Server} má všetky inforácie o hre.
+Keď je server v stave \textit{lobby}, klienti sa vedia pripojiť. Po prejdení do stavu \textit{game} server rozpošle paket popisujúci začiatočný stav hry (objekt triedy \textit{InitialInfo}). Potom začne nasledovný loop:
+
+\begin{center}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        Fáza & \textbf{Server} & \textbf{Klient} \\
+        \hline
+        \hline
+        1 & \makecell{pýta sa všetkých klientov na \\zmenu smeru (\code{"requesting move"})} & čaká na výzvu od serveru \\
+        \hline
+        2 & čaká na odpovede od všetkých klientov & \makecell{odpovedá serveru zmenou smeru\\ (\code{"l"}/\code{"r"}/\code{"f"})}\\
+        \hline
+        3 & \makecell{updatne mapu a pošle zmenu\\stavu (objekt \textit{MapInfo}, \\ktorý vráti metóda\\ \textit{createMapUpdatePacket} objektu \\\textit{MasterMap})} & čaká na update mapy \\
+        \hline
+        4 & čaká kým ubehne dĺžka jedného kola & \makecell{updatne stav metódou \\\textit{updateFromMapUpdatePacket} \\objektu \textit{Map}} \\
+        \hline
+    \end{tabular}
+\end{center}
+
+Server hru ukonči, keď ostanú menej ako dva hady nažive správou \code{"game over"} a následne ukonči všetky spojenia.
+
+\end{document}

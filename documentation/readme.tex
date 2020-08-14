@@ -1,0 +1,43 @@
+\section*{Sake}\label{sake}
+
+\textit{A project for programming class (year 1, term 2) at Charles University,
+Prague.}
+\medskip
+
+Sake is an arcade-like multiplayer game, that uses monogame C\# library. Last snake slithering wins.
+
+\subsection*{How to run the game}\label{how-to-run-the-game}
+
+In order to run the game, server must be also running.
+
+\subsubsection*{Server}\label{server}
+
+To run server, you have to build and run \emph{server} project. There
+are 3 commands in the \emph{server} program:
+
+\begin{itemize}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  \textbf{lobby}: puts server in a lobby state, enabling users to
+  connect. Max 4 players are supported.
+\item
+  \textbf{game}: starts the game
+\item
+  \textbf{quit}: terminates the program
+\end{itemize}
+
+\subsubsection*{Game}\label{game}
+
+First you have to configure IP address of the server in the
+\emph{constants} library in the \emph{Sake} project (use
+\texttt{"localhost"} for localhost) To run the game, build and run
+\emph{Sake} project. Then wait for the server to star the game.
+\textbf{Do not terminate the program until the game ends, the server
+will crash} (a feature, not a bug...).
+
+Use right and left arrow to turn.
+
+\medskip
+\emph{It is not recommended to publish the game yet, any sort of
+configuration is missing, so in order to change server IP address or
+game paramateres, you have to change the code}
