@@ -11,18 +11,22 @@ using gameLibrary;
 using Microsoft.Xna.Framework;
 using System.Diagnostics.Tracing;
 using Microsoft.Xna.Framework.Input;
+using constants;
 
 namespace Server
 {
     class Program
     {
         private const int BUFFER_SIZE = 2048;
-        private const int PORT = 100;
-        private const int HEIGHT = 30, WIDTH = 50, CELLSIZE = 16;
-        private const int TPS = 10;
+        private static readonly int PORT = constants.network.port;
+        private static readonly int
+            HEIGHT = constants.map.height,
+            WIDTH = constants.map.width,
+            TPS = constants.map.tps,
+            initialInvincibility = constants.map.initialInvincibility;
+        private const int CELLSIZE = 16;
         private const int maxPlayers = 4;
-        private const int initialInvincibility = 3*TPS;
-
+        
         private static readonly Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         private static List<User> users = new List<User>();
         private static readonly int tickMs = 1000 / TPS;

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gameLibrary", "gameLibrary\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "protocolLibrary", "protocolLibrary\protocolLibrary.csproj", "{8B6E17E9-2E04-469D-8B57-6E60E161DD00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "constants", "constants\constants.csproj", "{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,14 @@ Global
 		{8B6E17E9-2E04-469D-8B57-6E60E161DD00}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8B6E17E9-2E04-469D-8B57-6E60E161DD00}.Release|x86.ActiveCfg = Release|Any CPU
 		{8B6E17E9-2E04-469D-8B57-6E60E161DD00}.Release|x86.Build.0 = Release|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Debug|x86.Build.0 = Debug|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Release|x86.ActiveCfg = Release|Any CPU
+		{5B516EA4-48B6-45BD-AC65-128C01CDFBF0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

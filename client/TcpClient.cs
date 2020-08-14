@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq.Expressions;
+using constants;
 
 namespace Client
 {
@@ -12,14 +13,9 @@ namespace Client
     {
         readonly Socket ClientSocket = new Socket
             (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        private readonly int PORT = 100;
+        private readonly int PORT = constants.network.port;
         public string LastResponse = "none response yet";
-        string serverAddress;
-
-        public TcpClient(string servAdd)
-        {
-            serverAddress = servAdd;
-        }
+        string serverAddress = constants.network.serverAddress;
 
         public void ConnectToServer()
         {

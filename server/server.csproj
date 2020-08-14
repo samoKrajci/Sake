@@ -54,6 +54,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\constants\constants.csproj">
+      <Project>{5b516ea4-48b6-45bd-ac65-128c01cdfbf0}</Project>
+      <Name>constants</Name>
+    </ProjectReference>
     <ProjectReference Include="..\gameLibrary\gameLibrary.csproj">
       <Project>{403dd0ae-8763-442f-920b-5642e1857696}</Project>
       <Name>gameLibrary</Name>

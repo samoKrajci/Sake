@@ -8,6 +8,7 @@ using protocolLibrary;
 using Microsoft.Xna.Framework;
 using System.Diagnostics;
 using System.CodeDom.Compiler;
+using constants;
 
 namespace gameLibrary
 {
@@ -17,11 +18,11 @@ namespace gameLibrary
         public List<Powerup> addedPowerups = new List<Powerup>();
         public List<Powerup> removedPowerups = new List<Powerup>();
 
-        private const int
-            foodGrow = 1,
-            megaFoodGrow = 5,
-            invincibilityDuration = 30,
-            slowDuration = 40;
+        private readonly int
+            foodGrow = constants.map.foodGrow,
+            megaFoodGrow = constants.map.megaFoodGrow,
+            invincibilityDuration = constants.map.invincibilityDuration,
+            slowDuration = constants.map.slowDuration;
 
         public MasterMap(int height, int width, int cellSize) : base(height, width, cellSize)
         {
@@ -152,12 +153,12 @@ namespace gameLibrary
         }
         public void GeneratePowerups()
         {
-            AddPowerupWithChance(20, "food");
-            AddPowerupWithChance(120, "megaFood");
-            AddPowerupWithChance(100, "invincibility");
-            AddPowerupWithChance(50, "stone");
-            AddPowerupWithChance(60, "slow");
-            AddPowerupWithChance(150, "reverse");
+            AddPowerupWithChance(constants.map.foodChance, "food");
+            AddPowerupWithChance(constants.map.megaFoodChance, "megaFood");
+            AddPowerupWithChance(constants.map.invincibilityChance, "invincibility");
+            AddPowerupWithChance(constants.map.stoneChance, "stone");
+            AddPowerupWithChance(constants.map.slowChance, "slow");
+            AddPowerupWithChance(constants.map.reverseChance, "reverse");
         }
         public MapUpdatePacket CreateMapUpdatePacket()
         {
@@ -275,7 +276,7 @@ namespace gameLibrary
                 }
             if (winnerId == -1)
                 return "none";
-            return Snake.colorsStr[winnerId];
+            return Snake.snakeNames[winnerId];
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using constants;
 
 namespace gameLibrary
 {
@@ -26,8 +27,8 @@ namespace gameLibrary
     public class Snake
     {
         public static Texture2D headTexture, bodyTexture;
-        public static List<Color> colors = new List<Color> { Color.Yellow, Color.Red, Color.Green, Color.Blue };
-        public static string[] colorsStr ={ "Yellow", "Red", "Green", "Blue" };
+        public static List<Color> colors = constants.map.colors;
+        public static string[] snakeNames = constants.map.snakeNames;
         public static Color invincibleColor = Color.White;
 
         public int _id;

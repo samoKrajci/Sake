@@ -22,7 +22,7 @@ namespace Sake
         string serverAddress = Sake.Properties.Settings.Default.serverAddress;
 
      
-        readonly Client.TcpClient tcpClient = new Client.TcpClient("localhost");
+        readonly Client.TcpClient tcpClient = new Client.TcpClient();
         SnakeUser snakeUser;
 
         private Texture2D 
